@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>Spark Publish Visualizations</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap -->
+                                
+        <link href="http://198.0.150.9/static/css/bootstrap.min.css" rel="stylesheet">
+
+                                        
+        <style>
+            body {
+                min-height: 200px;
+                padding-top: 10px;
+            }
+            h1, h3, h4, p {
+                margin-left: 50px;
+                margin-right: 50px;
+            }
+            svg {
+                margin-left: 50px;
+            }
+        
+            .link {
+                stroke: #000;
+                stroke-width: 1.5px;
+            }
+        
+            .node {
+                fill: #000;
+                stroke: #fff;
+                stroke-width: 1.5px;
+            }
+        
+            .d3-tip {
+                line-height: 1;
+                font-weight: bold;
+                padding: 12px;
+                background: rgba(0, 0, 0, 0.8);
+                color: #fff;
+                border-radius: 2px;
+            }
+            /* Creates a small triangle extender for the tooltip */
+            .d3-tip:after {
+                box-sizing: border-box;
+                display: inline;
+                font-size: 10px;
+                width: 100%;
+                line-height: 1;
+                color: rgba(0, 0, 0, 0.8);
+                content: "\25BC";
+                position: absolute;
+                text-align: center;
+            }
+        
+            /* Style northward tooltips differently */
+            .d3-tip.n:after {
+                margin: -1px 0 0 0;
+                top: 100%;
+                left: 0;
+            }
+        </style>
+        
+        
+        <script src="https://code.jquery.com/jquery.js"></script>
+        <script src="http://198.0.150.9/static/js/bootstrap.min.js"></script>
+        
+        
+        <script src="http://198.0.150.9/static/js/d3.v3.min.js"></script>
+        <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                
+            });
+        </script>
+        <script>
+            $(document).ready(function () {
+                var getKeys = function() {
+                    $.get("/keys", function (data) {
+                        keysList = document.getElementById("keysOut");
+                        keysList.innerHTML = "";
+                        data.forEach(function (key) {
+                            $("#keysOut").append("<div id=\"grantedKey" + key.name + "\"><p>" + key.name + "'s key<button id=\"revokeKey" + key.name + "\">Revoke</button></p></div>");
+                            $("#revokeKey" + key.name).click(function () {
+                                $("#grantedKey" + key.name)[0].innerHTML = "";
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/keys/revoke",
+                                    contentType: "application/json; charset=utf-8",
+                                    dataType: "json",
+                                    data: $.trim(JSON.stringify({"name": key.name})),
+                                    success: function () {
+                                    }
+                                })
+                                setTimeout(function(){ getKeys(); }, 2000);
+                            });
+                        });
+                    });
+                }
+                getKeys();
+
+                              
+                var source = new EventSource("/keyRequests");
+                if(typeof(EventSource) !== "undefined") {
+                    console.log("SSE is Supported!");
+                } else {
+                    console.log("SSE is NOT Supported");
+                }
+                console.log("Done");
+                source.addEventListener('message', function(e){
+                    var obj = jQuery.parseJSON(e.data);
+                    $( "#keysRequested" ).append( "<div id=\"requestedKey" + obj.name + "\"><p>" + obj.name + "<button id=\"grantKey" + obj.name + "\">Grant</button></p></div>" );
+                    $("#grantKey" + obj.name).click(function() {
+                        $( "#requestedKey" + obj.name)[0].innerHTML="";
+                        $.ajax({
+                            type: "POST",
+                            url: "/keys/grant",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            data:  $.trim(JSON.stringify( {"name": obj.name})),
+                            success: function() {
+
+                            }
+                        })
+                        setTimeout(function(){ getKeys(); }, 2000);
+                    });
+
+                }, false);
+        });
+            </script>
+                                        
+                                
+    </head>
+    <body>
+    <div class="row text-center">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+            <img class="img-center img-responsive" width="50%" align="center" style="display: block;margin-left: auto;margin-right: auto" src="http://bluz.io/static/img/logo.png" />
+            <h1>Open Sesame</h1>
+
+            <h4>Keys out:</h4>
+            <div id="keysOut"></div>
+            <h4>Keys Requested:</h4>
+            <div id="keysRequested"></div>
+        </div>
+        
+    </body>
+</html>
