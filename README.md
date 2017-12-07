@@ -6,7 +6,7 @@ Also includes sketch for Bluz and Core/Photon to lock/unlock the door. As Bluz i
 
 Code is not fully tested. Code is not production quality. It is just an example for a demo project
 
-##To run:
+## To run:
 1. Clone the repository
 2. Create file credentials.txt in the created directory, add your Spark username and password as json
 3. Run
